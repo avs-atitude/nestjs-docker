@@ -19,14 +19,17 @@
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
-    "typeorm": "ts-node -r tsconfig-paths/register node_modules/typeorm/cli.js -d ./src/config/ormconfig.local.ts",
-    "migration:rollback": "yarn typeorm migration:revert",
-    "migration:create": "yarn typeorm migration:create \"./src/database/migrations/$npm_config_name\"",
-    "migrate": "yarn typeorm migration:run",
-    "migrate:revert": "yarn typeorm migration:revert",
-    "drop:schema": "yarn typeorm schema:drop",
-    "db:refresh": "yarn typeorm schema:drop && yarn migrate",
-    "db:seed": "ts-node ./node_modules/typeorm-extension/dist/cli/index.js seed -d ./src/config/ormconfig.local.ts"
+    "typeorm": "typeorm-ts-node-commonjs -d ./dist/src/shared/database/data-source.js",
+    "typeorm-extension:seed": "ts-node -r tsconfig-paths/register ./node_modules/typeorm-extension/dist/cli/index.js seed -d"
+    "migration:create": "cd src/shared/database/migrations && typeorm-ts-node-commonjs migration:create",
+    "migration:generate": "npm run typeorm migration:generate",
+    "migration:revert": "npm run typeorm migration:revert",
+    "migration:run": "npm run typeorm migration:run && npm run db:seed",
+    "migration:run:local": "npm run build && npm run typeorm migration:run",
+    "db:drop": "npm run typeorm schema:drop",
+    "db:refresh": "npm run build && npm run db:drop && npm run migration:run",
+    "db:seed": "npm run typeorm-extension:seed ./dist/src/shared/database/data-source.ts",
+    "db:seed:local": "npm run db:refresh && npm run typeorm-extension:seed ./dist/src/shared/database/data-source.local.seeder.ts"
   },
   "dependencies": {
     "@nestjs/common": "^8.0.0",
