@@ -1,22 +1,38 @@
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { TypeOrmModuleAsyncOptions, TypeOrmModuleOptions } from '@nestjs/typeorm';
-import { User } from "src/entities/User.entity";
+import { DataSource, DataSourceOptions } from 'typeorm';
+import { SeederOptions } from 'typeorm-extension';
+import { MainSeeder } from './seeds/main.seeder';
 
-const config: TypeOrmModuleAsyncOptions = {
-  imports: [ConfigModule],
-  useFactory: (config: ConfigService) => {
-    return ({
-      type: 'mysql',
-      host: config.get('DB_HOST'),
-      port: +config.get('DB_PORT'),
-      username: config.get('DB_USER'),
-      password: config.get('DB_PASS'),
-      database: config.get('DB_NAME'),
-      entities: [User],
-      synchronize: false,
-    })
-  },
-  inject: [ConfigService]
-}
+export const dataSourceOptions = (
+  configService: ConfigService,
+): DataSourceOptions => {
+  return {
+    type: 'mysql',
+    host: configService.get<string>('DB_HOST'),
+    database: configService.get<string>('DB_NAME'),
+    port: configService.get<number>('DB_PORT'),
+    username: configService.get<string>('DB_USERNAME'),
+    password: configService.get<string>('DB_PASSWORD'),
+    entities: ['dist/**/*.entity.js'],
+  };
+};
 
-export default config;
+//required read environment variables
+ConfigModule.forRoot();
+
+const options: DataSourceOptions & SeederOptions = {
+  type: 'mysql',
+  host: process.env.DB_HOST,
+  port: Number(process.env.DB_PORT),
+  username: process.env.DB_USERNAME,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME,
+  entities: ['dist/**/*.entity.js'],
+  migrations: ['dist/src/shared/database/migrations/*.js'],
+  seeds: [MainSeeder],
+  synchronize: false,
+};
+
+const dataSource = new DataSource(options);
+
+export default dataSource;
